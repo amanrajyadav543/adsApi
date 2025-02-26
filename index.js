@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-
+require("dotenv").config();
 const app = express();
 const PORT = 5000;
 
@@ -11,7 +11,7 @@ app.use(express.json()); // Use express.json() instead of bodyParser
 // Connect to MongoDB
 // mongoose.connect("mongodb+srv://bit20it37@bit.ac.in:7524@clg@ads.mongodb.net/ad_database?retryWrites=true&w=majority")
 
-mongoose.connect("mongodb+srv://bit20it37:ads123@cluster0.cbzis.mongodb.net/entity?retryWrites=true&w=majority&appName=Cluster0")
+mongoose.connect(process.env.MONGO_URI)
 
   .then(() => console.log("Connected to MongoDB"))
   .catch(err => console.error("MongoDB connection error:", err));
