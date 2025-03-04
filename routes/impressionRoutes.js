@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { createImpression, getImpressions, getAds} = require("../controllers/impressionController");
+const { createImpressionI, getImpressions, getAds} = require("../controllers/impressionController");
 
 // POST: Record Impression
-router.post("/impression", createImpression);
+router.post("/impression", createImpressionI);
 
 // GET: Get All Impressions
 router.get("/impression", getImpressions);

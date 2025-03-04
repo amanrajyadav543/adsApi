@@ -2,7 +2,7 @@ const Impression = require("../model/impressionModelSchema");
 const adsModel = require("../model/adsModelSchema");
 // Create Impression
 
-const createImpression = async (req, res) => {
+const createImpressionI = async (req, res) => {
     try {
       const { ad_unit, timestamp } = req.body;
   
@@ -38,22 +38,6 @@ const createImpression = async (req, res) => {
     }
   };
   
-
-// const createImpression = async (req, res) => {
-//   try {
-//     const { ad_unit, timestamp } = req.body;
-//     const impression = new Impression({
-//       ad_unit,
-//       timestamp: timestamp || Date.now(),
-//     });
-//     await impression.save();
-//     res.status(201).json({ message: "Impression recorded successfully", impression });
-//   } catch (error) {
-//     console.error("Error saving impression:", error);
-//     res.status(500).json({ message: "Server Error" });
-//   }
-// };
-
 
 const getImpressions = async (req, res) => {
     try {
@@ -141,7 +125,7 @@ const getImpressions = async (req, res) => {
   
 
 module.exports = {
-  createImpression,
+    createImpressionI,
   getImpressions,
   getAds
 };

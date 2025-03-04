@@ -1,84 +1,121 @@
 const adsModel = require("../model/adsModelSchema");
-// const Ad = mongoose.model("Ad", adSchema);
-  // const adsController = async (req, res) => {
-  //   try {
-  //       const {
-  //           class_name,
-  //           widget_name,
-  //           height,
-  //           width,
-  //           ad_unit,
-  //           ad_type,
-        
-  //         } = req.body;
-  //     if (!req.body.ads || !Array.isArray(req.body.ads)) {
-  //       return res.status(400).json({ message: "Invalid request format" });
-  //     }  
+const Impression = require("../model/impressionModelSchema")
 
-  //    const newadsModel= new adsModel({
-  //          class_name,
-  //           widget_name,
-  //           height,
-  //           width,
-  //           ad_unit,
-  //           ad_type,
-  //     });
-  //     await newadsModel.save();
-      
-  //     const ads = await adsModel.insertMany(req.body.ads);
-  //     res.status(201).json({ message: "Ads saved successfully", ads });
-  //   } catch (error) {
-  //     res.status(500).json({ message: "Error saving ads", error: error.message });
-  //   }
-  // };
 
-  const adsController = async (req, res) => {
+  const createAd = async (req, res) => {
     try {
-      const {
-        class_name,
-        widget_name,
-        height,
-        width,
-        ad_unit,
-        ad_type,
-      } = req.body;
+      const { type, ad_unit_id } = req.body;
   
-      if (!class_name || !widget_name || !height || !width || !ad_unit || !ad_type) {
-        return res.status(400).json({ message: "All fields are required" });
+      if (!['google', 'custom', 'applovin', 'facebook'].includes(type)) {
+        return res.status(400).json({ message: 'Invalid ad platform type.' });
       }
   
-      const newAd = new adsModel({
-        class_name,
-        widget_name,
-        height,
-        width,
-        ad_unit,
-        ad_type,
-      });
+      const existingAd = await adsModel.findOne({ ad_unit_id });
+      if (existingAd) {
+        return res.status(400).json({ message: 'Ad with this ad_unit already exists.' });
+      }
   
-      await newAd.save();
+      const ad = new adsModel(req.body);
+      await ad.save();
   
-      res.status(201).json({ message: "Ad saved successfully", ad: newAd });
+      res.status(201).json({ message: 'Ad created successfully', ad });
     } catch (error) {
-      res.status(500).json({ message: "Error saving ad", error: error.message });
+      console.error('Error creating ad:', error);
+      res.status(500).json({ message: 'Server Error' });
     }
   };
   
-
-const adsShowController=async(req, res)=>{
-
+  // Get All Ads
+  const getAds = async (req, res) => {
     try {
-      const ads = await adsModel.find();
-      res.json({ads});
+      const { ad_unit } = req.query;
+  
+      if (ad_unit) {
+        const ad = await adsModel.findOne({ ad_unit });
+  
+        if (!ad) {
+          return res.status(404).json({ message: 'Ad not found.' });
+        }
+  
+        return res.status(200).json({ message: 'Ad fetched successfully', ad });
+      }
+  
+      const ads = await adsModel.find({});
+      res.status(200).json({ message: 'All ads fetched successfully', totalAds: ads.length, ads });
     } catch (error) {
-      res.status(500).json({ message: "Error fetching ads", error: error.message });
+      console.error('Error fetching ads:', error);
+      res.status(500).json({ message: 'Server Error' });
     }
+  };
+  
+  
+  // Record Impression
 
-}
 
+  const createImpression = async (req, res) => {
+    try {
+      const {
+        ad_unit_id,
+        firebase,
+        ad_id,
+        type,
+        ads_name,
+        ads_position,
+        from,
+        comapnyId,
+        country
+      } = req.query;
+  
+      if (!ad_unit_id) {
+        return res.status(400).json({ message: "ad_unit is required in query params." });
+      }
+  
+      const timestamp = Date.now();
+  
+      const impression = new Impression({
+        ad_unit_id,
+        firebase,
+        ad_id: parseInt(ad_id),
+        type,
+        ads_name,
+        ads_position,
+        from,
+        comapnyId,
+        country: country?.toLowerCase(),
+        timestamp,
+      });
+  
+      await impression.save();
+  
+      const ad = await adsModel.findOneAndUpdate(
+        { ad_unit_id },
+        {
+          $inc: { impressionCount: 1 },
+          lastImpressionAt: timestamp,
+        },
+        { new: true }
+      );
+  
+      if (!ad) {
+        return res.status(404).json({ message: "Ad not found for this ad_unit." });
+      }
+  
+      res.status(201).json({
+        message: "Impression recorded successfully",
+        impression,
+        updatedAd: ad,
+      });
+    } catch (error) {
+      console.error("Error saving impression:", error);
+      res.status(500).json({ message: "Server Error" });
+    }
+  };
 
 module.exports = {
-    adsController,
-    adsShowController
+    // adsController,
+    // adsShowController
+    createAd,
+    getAds,
+    createImpression
   };
   
